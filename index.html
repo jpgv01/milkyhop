@@ -213,11 +213,17 @@
     return Date.UTC(lima.getUTCFullYear(), lima.getUTCMonth(), lima.getUTCDate() - back) + OFF;
   }
   const byScore = (a, b) => b.score - a.score || (a.at || 0) - (b.at || 0);
+  // each name shows once, with its best score (rows must already be sorted best first)
+  function uniq(rows, n = 10) {
+    const seen = new Set(), out = [];
+    for (const r of rows) { const k = String(r.name).toUpperCase(); if (seen.has(k)) continue; seen.add(k); out.push(r); if (out.length === n) break; }
+    return out;
+  }
   function derive(rows) {
     const clean = rows.filter(r => typeof r.name === 'string' && typeof r.score === 'number').sort(byScore);
     const ws = weekStartMs();
-    boardAll = clean.slice(0, 10);
-    boardWeek = clean.filter(r => (r.at || 0) >= ws).slice(0, 10);
+    boardAll = uniq(clean);
+    boardWeek = uniq(clean.filter(r => (r.at || 0) >= ws));
     boardStatus = 'ok';
   }
   function readLocal() {
@@ -236,10 +242,10 @@
   }
   async function refreshRemote() {
     try {
-      const q = API() + '?select=id,name,score,created_at&order=score.desc,id.asc&limit=10';
+      const q = API() + '?select=id,name,score,created_at&order=score.desc,id.asc&limit=300';
       const since = new Date(weekStartMs()).toISOString();
       const [a, w] = await Promise.all([getJson(q), getJson(q + '&created_at=gte.' + encodeURIComponent(since))]);
-      boardAll = a; boardWeek = w; boardStatus = 'ok';
+      boardAll = uniq(a); boardWeek = uniq(w); boardStatus = 'ok';
     } catch (e) { if (!boardAll.length) boardStatus = 'error'; }
   }
   (async () => {
