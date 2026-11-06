@@ -141,7 +141,7 @@
       saveErr: "Couldn't save. Check your connection and try again.", full: 'The scoreboard is full right now.',
       share: 'Share my score', shareText: s => `I scored ${s} in Milky Hop! 🐶 Can you beat me?`,
       outfits: 'Outfits', top10: 'Top 10', close: 'Close', bows: "Milky's bows", collars: "Milky's collars", dresses: "Girl's dresses", hair: "Girl's hair", done: 'Done', need: n => `Score ${n}`,
-      medal: ['BRONZE MEDAL!', 'SILVER MEDAL!', 'GOLD MEDAL!'], treat: '+1 treat', langBtn: 'ES'
+      medal: ['BRONZE MEDAL!', 'SILVER MEDAL!', 'GOLD MEDAL!', 'PLATINUM MEDAL!'], treat: '+1 treat', langBtn: 'ES'
     },
     es: {
       tapHop: 'Toca para saltar', tapSpace: 'Toca o pulsa Espacio',
@@ -156,7 +156,7 @@
       saveErr: 'No se pudo guardar. Revisa tu conexión e inténtalo otra vez.', full: 'El marcador está lleno por ahora.',
       share: 'Compartir puntaje', shareText: s => `¡Hice ${s} puntos en Milky Hop! 🐶 ¿Me ganas?`,
       outfits: 'Accesorios', top10: 'Top 10', close: 'Cerrar', bows: 'Lazos de Milky', collars: 'Collares de Milky', dresses: 'Vestidos de la chica', hair: 'Peinado de la chica', done: 'Listo', need: n => `${n} puntos`,
-      medal: ['¡MEDALLA DE BRONCE!', '¡MEDALLA DE PLATA!', '¡MEDALLA DE ORO!'], treat: '+1 premio', langBtn: 'EN'
+      medal: ['¡MEDALLA DE BRONCE!', '¡MEDALLA DE PLATA!', '¡MEDALLA DE ORO!', '¡MEDALLA DE PLATINO!'], treat: '+1 premio', langBtn: 'EN'
     }
   };
   let lang = load('milkyHop.lang', null) || ((navigator.language || '').toLowerCase().startsWith('es') ? 'es' : 'en');
@@ -193,7 +193,7 @@
   const unlockedCount = b => [BOWS, COLLARS, DRESSES, HAIRS].reduce((n, l) => n + l.filter(x => x.need <= b).length, 0);
 
   // ---------- medals ----------
-  const MEDALS = [{ at: 10, c: '#cd7f32', d: '#9c5a1f' }, { at: 25, c: '#d9dde3', d: '#9aa1ab' }, { at: 50, c: '#ffd23f', d: '#d9a400' }];
+  const MEDALS = [{ at: 25, c: '#cd7f32', d: '#9c5a1f' }, { at: 50, c: '#d9dde3', d: '#9aa1ab' }, { at: 75, c: '#ffd23f', d: '#d9a400' }, { at: 100, c: '#e6f6ff', d: '#5fa8d3' }];
   function medalFor(s) { let m = -1; MEDALS.forEach((x, i) => { if (s >= x.at) m = i; }); return m; }
 
   // ---------- Top 10 leaderboards (this week + all time) ----------
