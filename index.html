@@ -25,8 +25,10 @@
   .ui-btn:active { transform: translateY(2px); box-shadow: 0 1px 0 #3a2a35; }
   .ui-btn:focus-visible { outline: 3px solid #ffd23f; outline-offset: 2px; }
   #langBtn { left: 12px; top: 12px; height: 38px; min-width: 52px; }
-  #closetBtn { left: 50%; transform: translateX(-50%); top: 648px; height: 46px; }
-  #closetBtn:active { transform: translateX(-50%) translateY(2px); }
+  #closetBtn { left: 216px; top: 648px; height: 46px; }
+  #boardBtn { right: 216px; top: 648px; height: 46px; white-space: nowrap; }
+  #boardClose { left: 50%; transform: translateX(-50%); top: 586px; height: 44px; min-width: 140px; background: #ffd23f; }
+  #boardClose:active { transform: translateX(-50%) translateY(2px); }
   #shareBtn { left: 50%; transform: translateX(-50%); top: 552px; height: 42px; background: #25d366; color: #fff; white-space: nowrap; }
   #shareBtn:active { transform: translateX(-50%) translateY(2px); }
 
@@ -62,7 +64,9 @@
 <canvas id="game"></canvas>
 <div id="ui">
   <button id="langBtn" class="ui-btn" type="button" data-ui></button>
+  <button id="boardBtn" class="ui-btn" type="button" data-ui></button>
   <button id="closetBtn" class="ui-btn" type="button" data-ui></button>
+  <button id="boardClose" class="ui-btn" type="button" data-ui hidden></button>
   <button id="shareBtn" class="ui-btn" type="button" data-ui hidden></button>
 </div>
 <form id="lbForm" hidden novalidate data-ui>
@@ -136,7 +140,7 @@
       nameErr: 'Use 2 to 10 letters, no numbers or spaces.', nameBad: 'Please choose another name.',
       saveErr: "Couldn't save. Check your connection and try again.", full: 'The scoreboard is full right now.',
       share: 'Share my score', shareText: s => `I scored ${s} in Milky Hop! 🐶 Can you beat me?`,
-      outfits: 'Outfits', bows: "Milky's bows", collars: "Milky's collars", dresses: "Girl's dresses", hair: "Girl's hair", done: 'Done', need: n => `Score ${n}`,
+      outfits: 'Outfits', top10: 'Top 10', close: 'Close', bows: "Milky's bows", collars: "Milky's collars", dresses: "Girl's dresses", hair: "Girl's hair", done: 'Done', need: n => `Score ${n}`,
       medal: ['BRONZE MEDAL!', 'SILVER MEDAL!', 'GOLD MEDAL!'], treat: '+1 treat', langBtn: 'ES'
     },
     es: {
@@ -151,7 +155,7 @@
       nameErr: 'Usa de 2 a 10 letras, sin números ni espacios.', nameBad: 'Elige otro nombre, por favor.',
       saveErr: 'No se pudo guardar. Revisa tu conexión e inténtalo otra vez.', full: 'El marcador está lleno por ahora.',
       share: 'Compartir puntaje', shareText: s => `¡Hice ${s} puntos en Milky Hop! 🐶 ¿Me ganas?`,
-      outfits: 'Accesorios', bows: 'Lazos de Milky', collars: 'Collares de Milky', dresses: 'Vestidos de la chica', hair: 'Peinado de la chica', done: 'Listo', need: n => `${n} puntos`,
+      outfits: 'Accesorios', top10: 'Top 10', close: 'Cerrar', bows: 'Lazos de Milky', collars: 'Collares de Milky', dresses: 'Vestidos de la chica', hair: 'Peinado de la chica', done: 'Listo', need: n => `${n} puntos`,
       medal: ['¡MEDALLA DE BRONCE!', '¡MEDALLA DE PLATA!', '¡MEDALLA DE ORO!'], treat: '+1 premio', langBtn: 'EN'
     }
   };
@@ -305,7 +309,7 @@
   const $ = id => document.getElementById(id);
   const lbForm = $('lbForm'), lbName = $('lbName'), lbErr = $('lbErr'), lbSave = $('lbSave'), lbSkip = $('lbSkip');
   const langBtn = $('langBtn'), closetBtn = $('closetBtn'), shareBtn = $('shareBtn'), closet = $('closet');
-  let closetOpen = false, pendingSecs = 0;
+  let closetOpen = false, boardOpen = false, pendingSecs = 0;
 
   function applyLang() {
     const s = L();
@@ -313,7 +317,7 @@
     $('lbTitle').textContent = s.madeTop; $('lbLabel').textContent = s.nameLabel;
     lbSkip.textContent = s.skip; lbSave.textContent = s.save;
     langBtn.textContent = s.langBtn; langBtn.setAttribute('aria-label', lang === 'en' ? 'Cambiar a español' : 'Switch to English');
-    closetBtn.textContent = '🎀 ' + s.outfits; shareBtn.textContent = '💬 ' + s.share;
+    closetBtn.textContent = '🎀 ' + s.outfits; $('boardBtn').textContent = '🏆 ' + s.top10; $('boardClose').textContent = s.close; shareBtn.textContent = '💬 ' + s.share;
     $('closetTitle').textContent = s.outfits; $('bowsTitle').textContent = s.bows; $('collarsTitle').textContent = s.collars;
     $('dressTitle').textContent = s.dresses; $('hairTitle').textContent = s.hair;
     $('closetDone').textContent = s.done;
@@ -347,6 +351,8 @@
     mk(DRESSES, dressId, $('dressSwatches'), id => { dressId = id; store('milkyHop.dress', id); });
     mk(HAIRS, hairId, $('hairSwatches'), id => { hairId = id; store('milkyHop.hair', id); });
   }
+  $('boardBtn').addEventListener('click', () => { boardOpen = true; if (lbMode === 'remote') refreshRemote(); });
+  $('boardClose').addEventListener('click', () => { boardOpen = false; });
   closetBtn.addEventListener('click', () => { closetOpen = true; buildCloset(); closet.hidden = false; });
   $('closetDone').addEventListener('click', () => { closetOpen = false; closet.hidden = true; });
 
@@ -484,7 +490,7 @@
 
   // ---------- input ----------
   function press() {
-    if (formOpen || closetOpen) return;
+    if (formOpen || closetOpen || boardOpen) return;
     if (state === 'start') { state = 'play'; reset(); hop(); return; }
     if (state === 'play') { hop(); return; }
     if (state === 'over' && overT > 0.6) { state = 'start'; reset(); }
@@ -494,7 +500,7 @@
     for (let i = 0; i < 5; i++) particles.push({ x: dog.x - 18, y: dog.y + 14, vx: -60 - Math.random() * 60, vy: (Math.random() - 0.3) * 80, life: 0.4, kind: 'puff' });
   }
   window.addEventListener('keydown', e => {
-    if (formOpen || closetOpen || e.target === lbName) return;
+    if (formOpen || closetOpen || boardOpen || e.target === lbName) return;
     if (e.code === 'Space' || e.code === 'ArrowUp' || e.code === 'KeyW' || e.code === 'Enter') { e.preventDefault(); if (!e.repeat) press(); }
     if (e.code === 'KeyM') muted = !muted;
   });
@@ -504,7 +510,7 @@
     const r = cv.getBoundingClientRect();
     const x = (clientX - r.left) / scale, y = (clientY - r.top) / scale;
     if (x > W - 56 && y < 56) { muted = !muted; return; }   // mute button
-    if (state === 'over' && !formOpen && y >= TAB_Y && y <= TAB_Y + TAB_H && Math.abs(x - W / 2) <= 132) {
+    if (((state === 'over' && !formOpen) || boardOpen) && y >= TAB_Y && y <= TAB_Y + TAB_H && Math.abs(x - W / 2) <= 132) {
       lbTab = x < W / 2 ? 'week' : 'all'; return;            // leaderboard tabs
     }
     press();
@@ -627,8 +633,10 @@
   let shown = {};
   function show(el, on) { if (shown[el.id] !== on) { shown[el.id] = on; el.hidden = !on; } }
   function syncButtons() {
-    show(langBtn, state === 'start' && !closetOpen);
-    show(closetBtn, state === 'start' && !closetOpen);
+    show(langBtn, state === 'start' && !closetOpen && !boardOpen);
+    show(closetBtn, state === 'start' && !closetOpen && !boardOpen);
+    show($('boardBtn'), state === 'start' && !closetOpen && !boardOpen);
+    show($('boardClose'), state === 'start' && boardOpen);
     show(shareBtn, state === 'over' && overT > 0.6 && !formOpen && lastScore > 0);
   }
 
@@ -919,6 +927,14 @@
       text(s.help3, W / 2, H * 0.68 + 46, 15, '#ffd23f');
       if (best > 0) text(s.yourBest + best, W / 2, 572, 20, '#ffd23f');
       if (boardAll.length) text(s.topDog + boardAll[0].name + '  ' + boardAll[0].score, W / 2, 600, 17, '#fff');
+    }
+    if (state === 'start' && boardOpen) {
+      ctx.fillStyle = 'rgba(43,29,51,.45)'; ctx.fillRect(0, 0, W, H);
+      panel(W / 2 - 160, 84, 320, 572);
+      text('🏆 ' + s.top10, W / 2, 140, 34, '#ffd23f');
+      if (best > 0) plain(s.yourBest + best, W / 2, 196, 17, '#3a2a35');
+      ctx.fillStyle = '#3a2a35'; ctx.fillRect(W / 2 - 130, 230, 260, 2);
+      drawBoard();
     }
     if (state === 'over') {
       ctx.globalAlpha = Math.min(1, overT * 3);
