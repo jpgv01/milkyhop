@@ -16,41 +16,78 @@
   body { position: fixed; inset: 0; box-sizing: border-box;
     padding: env(safe-area-inset-top) env(safe-area-inset-right) env(safe-area-inset-bottom) env(safe-area-inset-left); display: flex; align-items: center; justify-content: center; font-family: "Trebuchet MS", system-ui, sans-serif; }
   canvas { display: block; border-radius: 14px; box-shadow: 0 10px 40px rgba(0,0,0,.45); }
+  [hidden] { display: none !important; }
+
+  /* buttons laid over the canvas, positioned in game units (420 x 720) */
+  #ui { position: fixed; left: 0; top: 0; width: 420px; height: 720px; transform-origin: 0 0; pointer-events: none; z-index: 4; }
+  .ui-btn { position: absolute; pointer-events: auto; font: bold 17px "Trebuchet MS", system-ui, sans-serif; color: #3a2a35; background: #fffaf0;
+    border: 3px solid #3a2a35; border-radius: 12px; padding: 0 12px; cursor: pointer; box-shadow: 0 3px 0 #3a2a35; }
+  .ui-btn:active { transform: translateY(2px); box-shadow: 0 1px 0 #3a2a35; }
+  .ui-btn:focus-visible { outline: 3px solid #ffd23f; outline-offset: 2px; }
+  #langBtn { left: 12px; top: 12px; height: 38px; min-width: 52px; }
+  #closetBtn { left: 50%; transform: translateX(-50%); top: 648px; height: 46px; }
+  #closetBtn:active { transform: translateX(-50%) translateY(2px); }
+  #shareBtn { left: 50%; transform: translateX(-50%); top: 552px; height: 42px; background: #25d366; color: #fff; white-space: nowrap; }
+  #shareBtn:active { transform: translateX(-50%) translateY(2px); }
+
+  .card { background: #fffaf0; border: 4px solid #3a2a35; border-radius: 18px; padding: 14px 16px 16px; box-shadow: 0 8px 24px rgba(0,0,0,.35);
+    color: #3a2a35; font-family: "Trebuchet MS", system-ui, sans-serif; display: flex; flex-direction: column; gap: 8px; }
   #lbForm { position: fixed; left: 50%; transform: translateX(-50%); bottom: calc(env(safe-area-inset-bottom, 0px) + 28px);
     width: min(320px, calc(100vw - 32px)); z-index: 5; margin: 0; }
-  #lbForm[hidden] { display: none; }
-  .lb-card { background: #fffaf0; border: 4px solid #3a2a35; border-radius: 18px; padding: 14px 16px 16px; box-shadow: 0 8px 24px rgba(0,0,0,.35);
-    color: #3a2a35; font-family: "Trebuchet MS", system-ui, sans-serif; display: flex; flex-direction: column; gap: 8px; }
   .lb-title { margin: 0; font-size: 20px; font-weight: bold; color: #e0457a; text-align: center; }
-  .lb-card label { font-size: 14px; font-weight: bold; }
+  .card label { font-size: 14px; font-weight: bold; }
   #lbName { font: bold 22px "Trebuchet MS", system-ui, sans-serif; letter-spacing: 2px; text-transform: uppercase; padding: 8px 10px;
     border: 3px solid #3a2a35; border-radius: 10px; background: #fff; color: #3a2a35; width: 100%; box-sizing: border-box;
     -webkit-user-select: text; user-select: text; }
   #lbName:focus { outline: 3px solid #ffd23f; outline-offset: 1px; }
   .lb-err { margin: 0; min-height: 1em; font-size: 13px; color: #c62839; }
   .lb-row { display: flex; gap: 10px; }
-  .lb-row button { flex: 1; font: bold 18px "Trebuchet MS", system-ui, sans-serif; padding: 10px; border-radius: 12px; border: 3px solid #3a2a35; cursor: pointer; }
-  #lbSave { background: #ffd23f; color: #3a2a35; }
-  #lbSkip { background: #fff; color: #3a2a35; }
+  .lb-row button, #closetDone { flex: 1; font: bold 18px "Trebuchet MS", system-ui, sans-serif; padding: 10px; border-radius: 12px; border: 3px solid #3a2a35; cursor: pointer; color: #3a2a35; }
+  #lbSave, #closetDone { background: #ffd23f; }
+  #lbSkip { background: #fff; }
   .lb-row button:disabled { opacity: .6; }
+
+  #closet { position: fixed; left: 50%; top: 50%; transform: translate(-50%, -50%); width: min(340px, calc(100vw - 32px)); z-index: 6; }
+  #closet h2 { margin: 0; font-size: 22px; color: #e0457a; text-align: center; }
+  #closet h3 { margin: 6px 0 0; font-size: 15px; }
+  .swatches { display: flex; flex-wrap: wrap; gap: 8px; }
+  .sw { width: 56px; height: 64px; border: 3px solid #3a2a35; border-radius: 12px; background: #fff; display: flex; flex-direction: column;
+    align-items: center; justify-content: center; gap: 2px; font: bold 11px "Trebuchet MS", system-ui, sans-serif; color: #3a2a35; cursor: pointer; padding: 2px; }
+  .sw .dot { width: 26px; height: 26px; border-radius: 50%; border: 2px solid #3a2a35; }
+  .sw[aria-pressed="true"] { background: #ffe9a8; outline: 3px solid #e0457a; outline-offset: 1px; }
+  .sw:disabled { opacity: .55; cursor: default; }
 </style>
 </head>
 <body>
 <canvas id="game"></canvas>
-<form id="lbForm" hidden novalidate>
-  <div class="lb-card">
-    <p class="lb-title">You made the Top 10!</p>
-    <label for="lbName">Your name (2 to 10 letters)</label>
+<div id="ui">
+  <button id="langBtn" class="ui-btn" type="button" data-ui></button>
+  <button id="closetBtn" class="ui-btn" type="button" data-ui></button>
+  <button id="shareBtn" class="ui-btn" type="button" data-ui hidden></button>
+</div>
+<form id="lbForm" hidden novalidate data-ui>
+  <div class="card">
+    <p class="lb-title" id="lbTitle"></p>
+    <label for="lbName" id="lbLabel"></label>
     <input id="lbName" name="lbName" maxlength="10" autocomplete="off" autocorrect="off" autocapitalize="characters" spellcheck="false" enterkeyhint="done">
     <p id="lbErr" class="lb-err"></p>
-    <div class="lb-row"><button type="button" id="lbSkip">Skip</button><button type="submit" id="lbSave">Save</button></div>
+    <div class="lb-row"><button type="button" id="lbSkip"></button><button type="submit" id="lbSave"></button></div>
   </div>
 </form>
+<div id="closet" class="card" hidden data-ui role="dialog" aria-labelledby="closetTitle">
+  <h2 id="closetTitle"></h2>
+  <h3 id="bowsTitle"></h3>
+  <div class="swatches" id="bowSwatches"></div>
+  <h3 id="collarsTitle"></h3>
+  <div class="swatches" id="collarSwatches"></div>
+  <button type="button" id="closetDone"></button>
+</div>
 <script>
 (() => {
   const W = 420, H = 720;               // logical resolution
   const cv = document.getElementById('game');
   const ctx = cv.getContext('2d');
+  const ui = document.getElementById('ui');
   let scale = 1;
 
   function resize() {
@@ -64,6 +101,8 @@
     cv.width = Math.round(W * scale * dpr);
     cv.height = Math.round(H * scale * dpr);
     ctx.setTransform(scale * dpr, 0, 0, scale * dpr, 0, 0);
+    const r = cv.getBoundingClientRect();
+    ui.style.transform = `translate(${r.left}px, ${r.top}px) scale(${scale})`;
   }
   window.addEventListener('resize', resize);
   window.addEventListener('orientationchange', () => setTimeout(resize, 250));
@@ -71,39 +110,120 @@
   resize();
 
   let last = performance.now();
-  // ---------- storage ----------
-  const HS_KEY = 'milkyHop.highScore';
-  let best = 0;
-  try { best = parseInt(localStorage.getItem(HS_KEY) || '0', 10) || 0; } catch (e) {}
-  function saveBest() { try { localStorage.setItem(HS_KEY, String(best)); } catch (e) {} }
 
-  // ---------- Top 10 leaderboard ----------
-  // On the Claude link the board is shared through the page's database: everyone signed in sees it,
-  // and people allowed to change the page's data can add their name. Anywhere else (or signed out)
-  // the board is kept on this phone only.
-  // Shared web version: fill in the Supabase project URL and its public (anon / publishable) key.
+  // ---------- storage helpers ----------
+  function load(key, fallback) { try { const v = localStorage.getItem(key); return v == null ? fallback : v; } catch (e) { return fallback; } }
+  function store(key, val) { try { localStorage.setItem(key, val); } catch (e) {} }
+  const HS_KEY = 'milkyHop.highScore';
+  let best = parseInt(load(HS_KEY, '0'), 10) || 0;
+  function saveBest() { store(HS_KEY, String(best)); }
+
+  // ---------- language (English / Spanish) ----------
+  const STR = {
+    en: {
+      tapHop: 'Tap to hop', tapSpace: 'Tap or press Space',
+      help1: 'Help Milky the cocker spaniel', help2: 'bounce past the plushie towers!', help3: 'Grab the treats for bonus points!',
+      yourBest: 'Your best: ', topDog: 'Top dog: ',
+      oof: 'Oof! Plush pile-up', score: 'Score', best: 'Best', newBest: 'NEW BEST!', newOutfit: 'New outfit unlocked!',
+      week: 'THIS WEEK', all: 'ALL TIME', onPhone: 'saved on this phone only',
+      loading: 'Loading scores...', loadErr: "Couldn't load the Top 10.", empty: 'No scores yet. Be the first!',
+      tryAgain: 'Tap to try again',
+      madeTop: 'You made the Top 10!', nameLabel: 'Your name (2 to 10 letters)', skip: 'Skip', save: 'Save',
+      nameErr: 'Use 2 to 10 letters, no numbers or spaces.', nameBad: 'Please choose another name.',
+      saveErr: "Couldn't save. Check your connection and try again.", full: 'The scoreboard is full right now.',
+      share: 'Share my score', shareText: s => `I scored ${s} in Milky Hop! 🐶 Can you beat me?`,
+      outfits: 'Outfits', bows: 'Bows', collars: 'Collars', done: 'Done', need: n => `Score ${n}`,
+      medal: ['BRONZE MEDAL!', 'SILVER MEDAL!', 'GOLD MEDAL!'], treat: '+1 treat', langBtn: 'ES'
+    },
+    es: {
+      tapHop: 'Toca para saltar', tapSpace: 'Toca o pulsa Espacio',
+      help1: 'Ayuda a Milky, la cocker spaniel,', help2: 'a saltar las torres de peluches', help3: '¡Atrapa los premios para sumar más!',
+      yourBest: 'Tu récord: ', topDog: 'Líder: ',
+      oof: '¡Uy! Choque de peluches', score: 'Puntos', best: 'Récord', newBest: '¡NUEVO RÉCORD!', newOutfit: '¡Nuevo accesorio!',
+      week: 'ESTA SEMANA', all: 'HISTÓRICO', onPhone: 'guardado solo en este teléfono',
+      loading: 'Cargando puntajes...', loadErr: 'No se pudo cargar el Top 10.', empty: 'Aún no hay puntajes. ¡Sé el primero!',
+      tryAgain: 'Toca para jugar otra vez',
+      madeTop: '¡Entraste al Top 10!', nameLabel: 'Tu nombre (de 2 a 10 letras)', skip: 'Omitir', save: 'Guardar',
+      nameErr: 'Usa de 2 a 10 letras, sin números ni espacios.', nameBad: 'Elige otro nombre, por favor.',
+      saveErr: 'No se pudo guardar. Revisa tu conexión e inténtalo otra vez.', full: 'El marcador está lleno por ahora.',
+      share: 'Compartir puntaje', shareText: s => `¡Hice ${s} puntos en Milky Hop! 🐶 ¿Me ganas?`,
+      outfits: 'Accesorios', bows: 'Lazos', collars: 'Collares', done: 'Listo', need: n => `${n} puntos`,
+      medal: ['¡MEDALLA DE BRONCE!', '¡MEDALLA DE PLATA!', '¡MEDALLA DE ORO!'], treat: '+1 premio', langBtn: 'EN'
+    }
+  };
+  let lang = load('milkyHop.lang', null) || ((navigator.language || '').toLowerCase().startsWith('es') ? 'es' : 'en');
+  const L = () => STR[lang];
+
+  // ---------- outfits (unlocked by your best score) ----------
+  const BOWS = [
+    { id: 'pink', c: '#ff5d8f', d: '#e0457a', need: 0 },
+    { id: 'sky', c: '#5ec8ff', d: '#2a9fd6', need: 5 },
+    { id: 'lilac', c: '#b38bff', d: '#8a5be0', need: 15 },
+    { id: 'gold', c: '#ffd23f', d: '#d9a400', need: 30 },
+    { id: 'rainbow', c: 'rainbow', d: '#e0457a', need: 50 }
+  ];
+  const COLLARS = [
+    { id: 'red', c: '#e63946', need: 0 },
+    { id: 'mint', c: '#2ec4b6', need: 10 },
+    { id: 'navy', c: '#3a4fa3', need: 20 },
+    { id: 'pearl', c: '#f8f4ec', need: 40 }
+  ];
+  let bowId = load('milkyHop.bow', 'pink'), collarId = load('milkyHop.collar', 'red');
+  const unlockedCount = b => BOWS.filter(x => x.need <= b).length + COLLARS.filter(x => x.need <= b).length;
+
+  // ---------- medals ----------
+  const MEDALS = [{ at: 10, c: '#cd7f32', d: '#9c5a1f' }, { at: 25, c: '#d9dde3', d: '#9aa1ab' }, { at: 50, c: '#ffd23f', d: '#d9a400' }];
+  function medalFor(s) { let m = -1; MEDALS.forEach((x, i) => { if (s >= x.at) m = i; }); return m; }
+
+  // ---------- Top 10 leaderboards (this week + all time) ----------
+  // Shared web version: Supabase project URL and its public (publishable) key. Empty = not used.
   const LB_CONFIG = { url: 'https://pakriswoescdnwhhkyxt.supabase.co', key: 'sb_publishable_8q6JtvbW1quYl_0zY55Jpg_Z4HWx865' };
   const LB_REMOTE = !!(LB_CONFIG.url && LB_CONFIG.key);
-  const LB_LOCAL_KEY = 'milkyHop.top10', LB_NAME_KEY = 'milkyHop.lastName';
+  const LB_LOCAL_KEY = 'milkyHop.scores', LB_NAME_KEY = 'milkyHop.lastName';
   const NAME_RE = /^[A-ZÁÉÍÓÚÜÑ]{2,10}$/;
-  let board = [], boardStatus = 'loading', myEntryId = null, formOpen = false, pendingScore = 0;
+  const BLOCK_ANY = ['PUTA', 'PUTO', 'MIERD', 'CONCHA', 'PENDEJ', 'CABRON', 'CABRÓN', 'PICHUL', 'VERGA', 'PINGA', 'CHUCHA', 'HUEVON', 'HUEVÓN', 'COJUD',
+    'MARICON', 'MARICÓN', 'CULER', 'FUCK', 'SHIT', 'BITCH', 'DICK', 'PUSSY', 'CUNT', 'NAZI', 'HITLER', 'PORN', 'NIGG', 'WHORE', 'SLUT', 'COCK', 'PENE', 'VAGINA'];
+  const BLOCK_EXACT = ['ASS', 'SEX', 'CULO', 'CACA', 'POTO', 'TETA', 'TETAS', 'KKK', 'FAG'];
+  const nameOk = n => !BLOCK_EXACT.includes(n) && !BLOCK_ANY.some(w => n.includes(w));
+
+  let boardAll = [], boardWeek = [], boardStatus = 'loading', lbTab = 'week';
+  let myEntryId = null, formOpen = false, pendingScore = 0, savedThisRun = false;
   let lbMode = 'pending', db = null, canWrite = false;
 
-  function readLocalBoard() {
-    try { const b = JSON.parse(localStorage.getItem(LB_LOCAL_KEY) || '[]'); return Array.isArray(b) ? b : []; } catch (e) { return []; }
+  function weekStartMs() {           // Monday 00:00 in Lima (UTC-5)
+    const OFF = 5 * 3600e3, lima = new Date(Date.now() - OFF);
+    const back = (lima.getUTCDay() + 6) % 7;
+    return Date.UTC(lima.getUTCFullYear(), lima.getUTCMonth(), lima.getUTCDate() - back) + OFF;
   }
-  function useLocalBoard() { lbMode = 'local'; canWrite = true; board = readLocalBoard(); boardStatus = 'ok'; }
+  const byScore = (a, b) => b.score - a.score || (a.at || 0) - (b.at || 0);
+  function derive(rows) {
+    const clean = rows.filter(r => typeof r.name === 'string' && typeof r.score === 'number').sort(byScore);
+    const ws = weekStartMs();
+    boardAll = clean.slice(0, 10);
+    boardWeek = clean.filter(r => (r.at || 0) >= ws).slice(0, 10);
+    boardStatus = 'ok';
+  }
+  function readLocal() {
+    try { const b = JSON.parse(load(LB_LOCAL_KEY, '[]')); return Array.isArray(b) ? b : []; } catch (e) { return []; }
+  }
   function remoteHeaders(extra) {
     const h = { apikey: LB_CONFIG.key };
     if (!LB_CONFIG.key.startsWith('sb_')) h.Authorization = 'Bearer ' + LB_CONFIG.key;   // legacy anon JWT keys
     return Object.assign(h, extra || {});
   }
+  const API = () => LB_CONFIG.url.replace(/\/$/, '') + '/rest/v1/scores';
+  async function getJson(url) {
+    const r = await fetch(url, { headers: remoteHeaders(), cache: 'no-store' });
+    if (!r.ok) throw new Error('HTTP ' + r.status);
+    return r.json();
+  }
   async function refreshRemote() {
     try {
-      const r = await fetch(LB_CONFIG.url.replace(/\/$/, '') + '/rest/v1/scores?select=id,name,score&order=score.desc,id.asc&limit=10', { headers: remoteHeaders(), cache: 'no-store' });
-      if (!r.ok) throw new Error('HTTP ' + r.status);
-      board = await r.json(); boardStatus = 'ok';
-    } catch (e) { if (!board.length) boardStatus = 'error'; }
+      const q = API() + '?select=id,name,score,created_at&order=score.desc,id.asc&limit=10';
+      const since = new Date(weekStartMs()).toISOString();
+      const [a, w] = await Promise.all([getJson(q), getJson(q + '&created_at=gte.' + encodeURIComponent(since))]);
+      boardAll = a; boardWeek = w; boardStatus = 'ok';
+    } catch (e) { if (!boardAll.length) boardStatus = 'error'; }
   }
   (async () => {
     if (LB_REMOTE) {
@@ -113,7 +233,7 @@
       return;
     }
     try { db = window.claude && window.claude.use ? await window.claude.use('db') : null; } catch (e) { db = null; }
-    if (!db) { useLocalBoard(); return; }
+    if (!db) { lbMode = 'local'; canWrite = true; derive(readLocal()); return; }
     lbMode = 'shared';
     try {
       const u = await window.claude.use('user');
@@ -121,45 +241,101 @@
       canWrite = w !== false;            // null = not told: offer it and let the save decide
     } catch (e) { canWrite = true; }
     const timer = setTimeout(() => { if (boardStatus === 'loading') boardStatus = 'error'; }, 10000);
-    db.collection('scores').orderBy('score', 'desc').limit(10).onSnapshot(snap => {
+    db.collection('scores').orderBy('score', 'desc').limit(300).onSnapshot(snap => {
       clearTimeout(timer);
-      board = snap.docs.map(d => Object.assign({ id: d.id }, d.data()))
-        .filter(r => typeof r.name === 'string' && typeof r.score === 'number');
-      boardStatus = 'ok';
-    }, () => { clearTimeout(timer); if (!board.length) boardStatus = 'error'; });
+      derive(snap.docs.map(d => { const v = d.data(); return Object.assign({ id: d.id }, v, { at: Date.parse(v.at) || 0 }); }));
+    }, () => { clearTimeout(timer); if (!boardAll.length) boardStatus = 'error'; });
   })();
 
-  async function submitScore(name, sc) {
+  async function submitScore(name, sc, secs) {
     if (lbMode === 'remote') {
-      const r = await fetch(LB_CONFIG.url.replace(/\/$/, '') + '/rest/v1/scores', {
-        method: 'POST', headers: remoteHeaders({ 'Content-Type': 'application/json', Prefer: 'return=representation' }),
-        body: JSON.stringify({ name, score: sc })
+      const post = body => fetch(API(), {
+        method: 'POST', headers: remoteHeaders({ 'Content-Type': 'application/json', Prefer: 'return=representation' }), body: JSON.stringify(body)
       });
-      if (!r.ok) throw new Error('HTTP ' + r.status);
+      let r = await post({ name, score: sc, run_seconds: secs });
+      if (!r.ok) {
+        const txt = await r.text().catch(() => '');
+        if (r.status === 400 && /run_seconds/.test(txt)) r = await post({ name, score: sc });   // database not upgraded yet
+        if (!r.ok) throw new Error('HTTP ' + r.status);
+      }
       const rows = await r.json();
       await refreshRemote();
       return rows && rows[0] ? rows[0].id : null;
     }
     if (lbMode === 'shared') {
-      const ref = await db.collection('scores').add({ name, score: sc, at: new Date().toISOString() });
+      const ref = await db.collection('scores').add({ name, score: sc, run_seconds: secs, at: new Date().toISOString() });
       return ref.id;
     }
     const id = Date.now();
-    const b = readLocalBoard(); b.push({ id, name, score: sc });
-    b.sort((x, y) => y.score - x.score || x.id - y.id);
-    try { localStorage.setItem(LB_LOCAL_KEY, JSON.stringify(b.slice(0, 10))); } catch (e) {}
-    board = b.slice(0, 10);
+    const b = readLocal(); b.push({ id, name, score: sc, at: id });
+    b.sort(byScore);
+    store(LB_LOCAL_KEY, JSON.stringify(b.slice(0, 300)));
+    derive(b);
     return id;
   }
+  const fits = (list, sc) => list.length < 10 || sc > list[list.length - 1].score;
   function qualifies(sc) {
-    return sc > 0 && canWrite && boardStatus === 'ok' && (board.length < 10 || sc > board[board.length - 1].score);
+    return sc > 0 && canWrite && !savedThisRun && boardStatus === 'ok' && (fits(boardWeek, sc) || fits(boardAll, sc));
   }
 
-  const lbForm = document.getElementById('lbForm'), lbName = document.getElementById('lbName');
-  const lbErr = document.getElementById('lbErr'), lbSave = document.getElementById('lbSave'), lbSkip = document.getElementById('lbSkip');
-  function openForm(sc) {
-    pendingScore = sc; formOpen = true; lbErr.textContent = ''; lbSave.disabled = false;
-    try { lbName.value = localStorage.getItem(LB_NAME_KEY) || ''; } catch (e) { lbName.value = ''; }
+  // ---------- DOM: name form, closet, buttons ----------
+  const $ = id => document.getElementById(id);
+  const lbForm = $('lbForm'), lbName = $('lbName'), lbErr = $('lbErr'), lbSave = $('lbSave'), lbSkip = $('lbSkip');
+  const langBtn = $('langBtn'), closetBtn = $('closetBtn'), shareBtn = $('shareBtn'), closet = $('closet');
+  let closetOpen = false, pendingSecs = 0;
+
+  function applyLang() {
+    const s = L();
+    document.documentElement.lang = lang;
+    $('lbTitle').textContent = s.madeTop; $('lbLabel').textContent = s.nameLabel;
+    lbSkip.textContent = s.skip; lbSave.textContent = s.save;
+    langBtn.textContent = s.langBtn; langBtn.setAttribute('aria-label', lang === 'en' ? 'Cambiar a español' : 'Switch to English');
+    closetBtn.textContent = '🎀 ' + s.outfits; shareBtn.textContent = '💬 ' + s.share;
+    $('closetTitle').textContent = s.outfits; $('bowsTitle').textContent = s.bows; $('collarsTitle').textContent = s.collars;
+    $('closetDone').textContent = s.done;
+    if (closetOpen) buildCloset();
+  }
+  langBtn.addEventListener('click', () => { lang = lang === 'en' ? 'es' : 'en'; store('milkyHop.lang', lang); applyLang(); });
+
+  function buildCloset() {
+    const mk = (list, cur, container, pick) => {
+      container.textContent = '';
+      list.forEach(item => {
+        const b = document.createElement('button');
+        b.type = 'button'; b.className = 'sw';
+        const locked = item.need > best;
+        b.disabled = locked;
+        b.setAttribute('aria-pressed', String(item.id === cur));
+        const dot = document.createElement('span'); dot.className = 'dot';
+        dot.style.background = item.c === 'rainbow' ? 'conic-gradient(#ff5d8f, #ffd23f, #2ec4b6, #5ec8ff, #b38bff, #ff5d8f)' : (locked ? '#ddd' : item.c);
+        const lab = document.createElement('span');
+        lab.textContent = locked ? '🔒 ' + item.need : (item.need ? L().need(item.need) : '★');
+        b.append(dot, lab);
+        b.setAttribute('aria-label', item.id + (locked ? ' — ' + L().need(item.need) : ''));
+        b.addEventListener('click', () => { pick(item.id); buildCloset(); });
+        container.append(b);
+      });
+    };
+    mk(BOWS, bowId, $('bowSwatches'), id => { bowId = id; store('milkyHop.bow', id); });
+    mk(COLLARS, collarId, $('collarSwatches'), id => { collarId = id; store('milkyHop.collar', id); });
+  }
+  closetBtn.addEventListener('click', () => { closetOpen = true; buildCloset(); closet.hidden = false; });
+  $('closetDone').addEventListener('click', () => { closetOpen = false; closet.hidden = true; });
+
+  shareBtn.addEventListener('click', async () => {
+    const url = 'https://milkyhop.netlify.app';
+    const msg = L().shareText(lastScore);
+    if (navigator.share) {
+      try { await navigator.share({ text: msg, url }); return; } catch (e) { if (e && e.name === 'AbortError') return; }
+    }
+    const a = document.createElement('a');
+    a.href = 'https://wa.me/?text=' + encodeURIComponent(msg + ' ' + url); a.target = '_blank'; a.rel = 'noopener';
+    document.body.append(a); a.click(); a.remove();
+  });
+
+  function openForm(sc, secs) {
+    pendingScore = sc; pendingSecs = secs; formOpen = true; lbErr.textContent = ''; lbSave.disabled = false;
+    lbName.value = load(LB_NAME_KEY, '');
     lbForm.hidden = false;
     setTimeout(() => { try { lbName.focus(); } catch (e) {} }, 50);
   }
@@ -172,19 +348,25 @@
   lbSkip.addEventListener('click', closeForm);
   lbForm.addEventListener('submit', async e => {
     e.preventDefault();
+    if (savedThisRun) { closeForm(); return; }
     const name = lbName.value.trim().toUpperCase();
-    if (!NAME_RE.test(name)) { lbErr.textContent = 'Use 2 to 10 letters, no numbers or spaces.'; return; }
+    if (!NAME_RE.test(name)) { lbErr.textContent = L().nameErr; return; }
+    if (!nameOk(name)) { lbErr.textContent = L().nameBad; return; }
     lbSave.disabled = true; lbErr.textContent = '';
     try {
-      myEntryId = await submitScore(name, pendingScore);
-      try { localStorage.setItem(LB_NAME_KEY, name); } catch (e2) {}
+      savedThisRun = true;
+      myEntryId = await submitScore(name, pendingScore, pendingSecs);
+      store(LB_NAME_KEY, name);
+      if (!boardWeek.some(r => r.id === myEntryId) && boardAll.some(r => r.id === myEntryId)) lbTab = 'all';
       closeForm();
     } catch (err) {
+      savedThisRun = false;
       if (err && err.code === 'invalid_argument') { canWrite = false; closeForm(); return; }
       lbSave.disabled = false;
-      lbErr.textContent = err && err.code === 'quota_exceeded' ? 'The scoreboard is full right now.' : "Couldn't save. Check your connection and try again.";
+      lbErr.textContent = err && err.code === 'quota_exceeded' ? L().full : L().saveErr;
     }
   });
+  applyLang();
 
   // ---------- audio (tiny synth blips) ----------
   let actx = null, muted = false;
@@ -212,6 +394,8 @@
   const sfx = {
     hop: () => tone(520, 0.12, 'triangle', 0.12, 1.6),
     point: () => { tone(880, 0.08, 'square', 0.06); setTimeout(() => tone(1175, 0.1, 'square', 0.06), 70); },
+    treat: () => { tone(1320, 0.07, 'sine', 0.1); setTimeout(() => tone(1760, 0.09, 'sine', 0.1), 60); },
+    medal: () => [784, 988, 1175, 1568].forEach((f, i) => setTimeout(() => tone(f, 0.14, 'triangle', 0.1), i * 90)),
     bonk: () => { tone(220, 0.25, 'sawtooth', 0.12, 0.4); setTimeout(() => tone(330, 0.15, 'triangle', 0.1, 0.6), 120); }
   };
 
@@ -228,16 +412,19 @@
 
   let state = 'start';   // start | play | over
   const girl = { x: 58, run: 0 };
-  let dog, stacks, clouds, hills, particles, score, speed, spawnT, groundX, t, overT, newBest;
+  let dog, stacks, treats, clouds, hills, stars, particles, score, speed, spawnT, groundX, t, overT, newBest;
+  let spawned = 0, runTime = 0, toast = null, lastScore = 0, unlockedNew = false, skyT = 0;
 
   function reset() {
     dog = { x: 120, y: H * 0.42, vy: 0, rot: 0, ear: 0, legs: 0 };
-    stacks = []; particles = [];
+    stacks = []; treats = []; particles = [];
     girl.x = 58;
     score = 0; speed = 170; spawnT = 0.6; groundX = 0; overT = 0; newBest = false;
+    spawned = 0; runTime = 0; toast = null; savedThisRun = false; unlockedNew = false; myEntryId = null;
   }
   clouds = Array.from({ length: 5 }, (_, i) => ({ x: i * 110 + Math.random() * 60, y: 60 + Math.random() * 220, s: 0.6 + Math.random() * 0.7 }));
   hills = Array.from({ length: 6 }, (_, i) => ({ x: i * 120, h: 60 + Math.random() * 60 }));
+  stars = Array.from({ length: 40 }, () => ({ x: Math.random() * W, y: Math.random() * 380, r: 0.6 + Math.random() * 1.4, p: Math.random() * 6 }));
   t = 0;
   reset();
 
@@ -247,20 +434,29 @@
   }
 
   function spawnStack() {
-    const gap = Math.max(175, 230 - score * 2.2);
+    // the first three towers have wide gaps near the middle so new players can get going
+    const easy = spawned < 3;
+    const gap = easy ? 270 - spawned * 20 : Math.max(175, 230 - score * 2.2);
     const minTop = 80, maxTop = GROUND - gap - 70;
-    const gapTop = minTop + Math.random() * (maxTop - minTop);
+    let gapTop = minTop + Math.random() * (maxTop - minTop);
+    if (easy) { const mid = (GROUND - gap) / 2; gapTop = mid + (Math.random() - 0.5) * 80; }
     const gapBot = gapTop + gap;
     const top = [], bot = [];
-    // stack plushies from the gap edge outward so faces line the gap
     for (let y = gapTop - PLUSH_R; y > -PLUSH_R * 2; y -= PLUSH_R * 1.75) top.push({ y, p: randomPlush(), wob: Math.random() * 6 });
     for (let y = gapBot + PLUSH_R; y < GROUND + PLUSH_R; y += PLUSH_R * 1.75) bot.push({ y, p: randomPlush(), wob: Math.random() * 6 });
-    stacks.push({ x: W + STACK_W, gapTop, gapBot, top, bot, passed: false });
+    const x = W + STACK_W;
+    stacks.push({ x, gapTop, gapBot, top, bot, passed: false });
+    // a dog treat floats in most gaps (never in the very first one)
+    if (spawned > 0 && Math.random() < 0.65) {
+      const off = (Math.random() - 0.5) * (gap - 90);
+      treats.push({ x: x + (Math.random() < 0.5 ? 0 : STACK_W * 0.9), y: gapTop + gap / 2 + off, got: false, ph: Math.random() * 6 });
+    }
+    spawned++;
   }
 
   // ---------- input ----------
   function press() {
-    if (formOpen) return;
+    if (formOpen || closetOpen) return;
     if (state === 'start') { state = 'play'; reset(); hop(); return; }
     if (state === 'play') { hop(); return; }
     if (state === 'over' && overT > 0.6) { state = 'start'; reset(); }
@@ -270,36 +466,48 @@
     for (let i = 0; i < 5; i++) particles.push({ x: dog.x - 18, y: dog.y + 14, vx: -60 - Math.random() * 60, vy: (Math.random() - 0.3) * 80, life: 0.4, kind: 'puff' });
   }
   window.addEventListener('keydown', e => {
-    if (formOpen || e.target === lbName) return;
+    if (formOpen || closetOpen || e.target === lbName) return;
     if (e.code === 'Space' || e.code === 'ArrowUp' || e.code === 'KeyW' || e.code === 'Enter') { e.preventDefault(); if (!e.repeat) press(); }
     if (e.code === 'KeyM') muted = !muted;
   });
+  const TAB_Y = 252, TAB_H = 28;
   function tapAt(clientX, clientY) {
     unlockAudio();
     const r = cv.getBoundingClientRect();
     const x = (clientX - r.left) / scale, y = (clientY - r.top) / scale;
     if (x > W - 56 && y < 56) { muted = !muted; return; }   // mute button
+    if (state === 'over' && !formOpen && y >= TAB_Y && y <= TAB_Y + TAB_H && Math.abs(x - W / 2) <= 132) {
+      lbTab = x < W / 2 ? 'week' : 'all'; return;            // leaderboard tabs
+    }
     press();
   }
+  const inUI = e => e.target.closest && e.target.closest('[data-ui]');
   // whole screen is the tap zone (including letterbox bars around the canvas)
   document.addEventListener('touchstart', e => {
-    if (e.target.closest && e.target.closest('#lbForm')) return;   // let the name form work normally
+    if (inUI(e)) return;               // let buttons and the name form work normally
     e.preventDefault();
     const tch = e.changedTouches[0]; tapAt(tch.clientX, tch.clientY);
   }, { passive: false });
-  document.addEventListener('touchmove', e => { if (!(e.target.closest && e.target.closest('#lbForm'))) e.preventDefault(); }, { passive: false });
+  document.addEventListener('touchmove', e => { if (!inUI(e)) e.preventDefault(); }, { passive: false });
   document.addEventListener('pointerdown', e => {
     if (e.pointerType === 'touch') return;   // handled by touchstart
-    if (e.target.closest && e.target.closest('#lbForm')) return;
+    if (inUI(e)) return;
     e.preventDefault(); tapAt(e.clientX, e.clientY);
   });
-  ['gesturestart', 'gesturechange', 'dblclick', 'contextmenu'].forEach(ev => document.addEventListener(ev, e => { if (!(e.target.closest && e.target.closest('#lbForm'))) e.preventDefault(); }, { passive: false }));
+  ['gesturestart', 'gesturechange', 'dblclick', 'contextmenu'].forEach(ev => document.addEventListener(ev, e => { if (!inUI(e)) e.preventDefault(); }, { passive: false }));
   window.addEventListener('keydown', unlockAudio, { once: true });
-  // pause cleanly when switching apps / locking the phone
   document.addEventListener('visibilitychange', () => {
     if (document.hidden) { if (actx && actx.state === 'running') actx.suspend(); }
     else { last = performance.now(); }
   });
+
+  function addPoint(n, x, y) {
+    const before = score;
+    score += n;
+    const m = medalFor(score);
+    if (m > medalFor(before)) { toast = { text: L().medal[m], t: 0, medal: m }; sfx.medal(); }
+    for (let i = 0; i < 8; i++) particles.push({ x, y, vx: (Math.random() - 0.5) * 160, vy: -80 - Math.random() * 120, life: 0.8, kind: 'star' });
+  }
 
   // ---------- update ----------
   function update(dt) {
@@ -308,10 +516,14 @@
     const scroll = state === 'over' ? 0 : (state === 'play' ? speed : 120);
     groundX = (groundX + scroll * dt) % 40;
     for (const h of hills) { h.x -= scroll * 0.3 * dt; if (h.x < -140) { h.x += 720; h.h = 60 + Math.random() * 60; } }
+    // sky follows the score: day until 12, sunset by 22, night from 38
+    const tgt = state === 'start' ? 0 : (score < 12 ? 0 : score < 28 ? Math.min(1, (score - 12) / 10) : 1 + Math.min(1, (score - 28) / 10));
+    skyT += ((state === 'start' ? 0 : tgt) - skyT) * Math.min(1, dt * 1.5);
 
     if (state === 'start') {
       dog.y = H * 0.42 + Math.sin(t * 3) * 12; dog.rot = Math.sin(t * 3) * 0.08; dog.legs += dt * 10;
     } else if (state === 'play') {
+      runTime += dt;
       speed = Math.min(300, 170 + score * 4);
       dog.vy = Math.min(MAX_FALL, dog.vy + GRAVITY * dt);
       dog.y += dog.vy * dt;
@@ -324,12 +536,21 @@
 
       for (const s of stacks) {
         s.x -= speed * dt;
-        if (!s.passed && s.x + STACK_W / 2 < dog.x) {
-          s.passed = true; score++; sfx.point();
-          for (let i = 0; i < 8; i++) particles.push({ x: dog.x + 10, y: dog.y - 20, vx: (Math.random() - 0.5) * 160, vy: -80 - Math.random() * 120, life: 0.8, kind: 'star' });
-        }
+        if (!s.passed && s.x + STACK_W / 2 < dog.x) { s.passed = true; sfx.point(); addPoint(1, dog.x + 10, dog.y - 20); }
       }
       stacks = stacks.filter(s => s.x > -STACK_W);
+      for (const tr of treats) {
+        tr.x -= speed * dt;
+        if (!tr.got) {
+          const dx = dog.x + 18 - tr.x, dy = dog.y - 8 - tr.y;
+          if (dx * dx + dy * dy < 30 * 30) {
+            tr.got = true; sfx.treat(); addPoint(1, tr.x, tr.y);
+            particles.push({ x: tr.x, y: tr.y - 10, vx: 0, vy: -50, life: 0.9, kind: 'label', text: L().treat });
+          }
+        }
+      }
+      treats = treats.filter(tr => tr.x > -30 && !tr.got);
+      if (toast) { toast.t += dt; if (toast.t > 1.8) toast = null; }
 
       if (collides()) gameOver();
     } else if (state === 'over') {
@@ -343,6 +564,7 @@
     else girl.run += dt * (state === 'play' ? speed / 16 : 9);
     for (const p of particles) { p.x += p.vx * dt; p.y += p.vy * dt; p.vy += (p.kind === 'star' ? 300 : 0) * dt; p.life -= dt; }
     particles = particles.filter(p => p.life > 0);
+    syncButtons();
   }
 
   function collides() {
@@ -358,40 +580,71 @@
   }
 
   function gameOver() {
-    state = 'over'; overT = 0; sfx.bonk();
+    state = 'over'; overT = 0; sfx.bonk(); toast = null;
     dog.vy = -250;
-    if (score > best) { best = score; newBest = true; saveBest(); }
+    lastScore = score;
+    if (score > best) {
+      unlockedNew = unlockedCount(score) > unlockedCount(best);
+      best = score; newBest = true; saveBest();
+    }
     myEntryId = null;
-    const finalScore = score;
-    if (lbMode === 'local') board = readLocalBoard();
+    const finalScore = score, secs = Math.round(runTime * 10) / 10;
+    if (lbMode === 'local') derive(readLocal());
     if (lbMode === 'remote') refreshRemote();
-    setTimeout(() => { if (state === 'over' && !formOpen && qualifies(finalScore)) openForm(finalScore); }, 600);
+    lbTab = 'week';
+    setTimeout(() => { if (state === 'over' && !formOpen && qualifies(finalScore)) openForm(finalScore, secs); }, 600);
     for (let i = 0; i < 14; i++) particles.push({ x: dog.x, y: dog.y, vx: (Math.random() - 0.5) * 260, vy: (Math.random() - 0.5) * 260, life: 0.6, kind: 'puff' });
+  }
+
+  let shown = {};
+  function show(el, on) { if (shown[el.id] !== on) { shown[el.id] = on; el.hidden = !on; } }
+  function syncButtons() {
+    show(langBtn, state === 'start' && !closetOpen);
+    show(closetBtn, state === 'start' && !closetOpen);
+    show(shareBtn, state === 'over' && overT > 0.6 && !formOpen && lastScore > 0);
   }
 
   // ---------- drawing helpers ----------
   function ellipse(x, y, rx, ry, fill, rot = 0) { ctx.beginPath(); ctx.ellipse(x, y, rx, ry, rot, 0, Math.PI * 2); ctx.fillStyle = fill; ctx.fill(); }
+  function hex(c) { const n = parseInt(c.slice(1), 16); return [n >> 16, (n >> 8) & 255, n & 255]; }
+  function mix(a, b, k) { const A = hex(a), B = hex(b); return 'rgb(' + A.map((v, i) => Math.round(v + (B[i] - v) * k)).join(',') + ')'; }
+  function mix3(day, dusk, night) { return skyT <= 1 ? mix(day, dusk, skyT) : mix(dusk, night, skyT - 1); }
 
   function drawSky() {
-    const g = ctx.createLinearGradient(0, 0, 0, H);
-    g.addColorStop(0, '#7ec8f2'); g.addColorStop(0.65, '#cdeefc'); g.addColorStop(1, '#fff3dc');
+    const g = ctx.createLinearGradient(0, 0, 0, H), top = mix3('#7ec8f2', '#ff9a8b', '#141b44');
+    g.addColorStop(0, top);
+    g.addColorStop(0.65, mix3('#cdeefc', '#ffc3a0', '#3b3f7a'));
+    g.addColorStop(1, mix3('#fff3dc', '#ffe8c2', '#6b5b95'));
     ctx.fillStyle = g; ctx.fillRect(0, 0, W, H);
-    // sun
-    ellipse(330, 110, 46, 46, 'rgba(255,240,170,.55)'); ellipse(330, 110, 32, 32, '#fff2a8');
-    for (const c of clouds) {
-      ctx.globalAlpha = 0.9;
-      ellipse(c.x, c.y, 34 * c.s, 18 * c.s, '#fff'); ellipse(c.x + 24 * c.s, c.y + 4 * c.s, 26 * c.s, 15 * c.s, '#fff'); ellipse(c.x - 22 * c.s, c.y + 5 * c.s, 22 * c.s, 13 * c.s, '#fff');
+    const night = Math.max(0, skyT - 1);
+    if (night > 0) {
+      for (const s of stars) { ctx.globalAlpha = night * (0.5 + 0.5 * Math.sin(t * 2 + s.p)); ellipse(s.x, s.y, s.r, s.r, '#fff'); }
       ctx.globalAlpha = 1;
     }
-    for (const h of hills) ellipse(h.x, GROUND + 10, 110, h.h, '#a8dba0');
+    // sun sets behind the hills, then the moon comes up
+    const sunK = Math.min(1, skyT);
+    const sunY = 110 + sunK * 250 + night * 200;
+    ctx.globalAlpha = 1 - night;
+    ellipse(330, sunY, 46, 46, sunK > 0.5 ? 'rgba(255,170,90,.45)' : 'rgba(255,240,170,.55)'); ellipse(330, sunY, 32, 32, mix('#fff2a8', '#ffa94d', sunK));
+    ctx.globalAlpha = night;
+    ellipse(90, 110, 26, 26, '#f4f1de'); ellipse(100, 104, 24, 24, top);
+    ctx.globalAlpha = 1;
+    for (const c of clouds) {
+      ctx.globalAlpha = 0.9 - night * 0.6;
+      const cc = mix3('#ffffff', '#ffe1d6', '#8c8fbf');
+      ellipse(c.x, c.y, 34 * c.s, 18 * c.s, cc); ellipse(c.x + 24 * c.s, c.y + 4 * c.s, 26 * c.s, 15 * c.s, cc); ellipse(c.x - 22 * c.s, c.y + 5 * c.s, 22 * c.s, 13 * c.s, cc);
+    }
+    ctx.globalAlpha = 1;
+    const hc = mix3('#a8dba0', '#c9c78a', '#4f6f6a');
+    for (const h of hills) ellipse(h.x, GROUND + 10, 110, h.h, hc);
   }
 
   function drawGround() {
-    ctx.fillStyle = '#7cc46f'; ctx.fillRect(0, GROUND, W, 18);
-    ctx.fillStyle = '#e8c48f'; ctx.fillRect(0, GROUND + 18, W, H - GROUND - 18);
-    ctx.fillStyle = '#d9ad72';
+    ctx.fillStyle = mix3('#7cc46f', '#8fb862', '#3f6d4a'); ctx.fillRect(0, GROUND, W, 18);
+    ctx.fillStyle = mix3('#e8c48f', '#e2b47e', '#7d6a5a'); ctx.fillRect(0, GROUND + 18, W, H - GROUND - 18);
+    ctx.fillStyle = mix3('#d9ad72', '#cf9f68', '#6a5747');
     for (let x = -groundX; x < W + 40; x += 40) { ctx.beginPath(); ctx.arc(x, GROUND + 46, 6, 0, Math.PI * 2); ctx.fill(); ctx.beginPath(); ctx.arc(x + 20, GROUND + 70, 4, 0, Math.PI * 2); ctx.fill(); }
-    ctx.fillStyle = '#5fae55';
+    ctx.fillStyle = mix3('#5fae55', '#76a04f', '#2f5a3b');
     for (let x = -groundX; x < W + 40; x += 20) { ctx.beginPath(); ctx.moveTo(x, GROUND); ctx.lineTo(x + 5, GROUND - 7); ctx.lineTo(x + 10, GROUND); ctx.fill(); }
   }
 
@@ -399,18 +652,15 @@
     const r = PLUSH_R;
     const sq = 1 + Math.sin(t * 4 + wob) * 0.03;
     ctx.save(); ctx.translate(x, y); ctx.scale(1 / sq, sq);
-    // ears
     ctx.fillStyle = p.c[1];
     if (p.ear === 'cat') { for (const s of [-1, 1]) { ctx.beginPath(); ctx.moveTo(s * 10, -r + 6); ctx.lineTo(s * 22, -r - 10); ctx.lineTo(s * 25, -r + 14); ctx.fill(); } }
     if (p.ear === 'bear') { ellipse(-19, -r + 6, 9, 9, p.c[1]); ellipse(19, -r + 6, 9, 9, p.c[1]); }
     if (p.ear === 'bunny') { ellipse(-10, -r - 6, 6, 16, p.c[1], -0.2); ellipse(10, -r - 6, 6, 16, p.c[1], 0.2); }
     if (p.ear === 'horns') { ctx.fillStyle = '#fff6d6'; for (const s of [-1, 1]) { ctx.beginPath(); ctx.moveTo(s * 8, -r + 4); ctx.lineTo(s * 13, -r - 12); ctx.lineTo(s * 18, -r + 6); ctx.fill(); } }
-    // body: soft squashed round
     ellipse(0, 0, r + 2, r - 1, p.c[0]);
-    ellipse(0, r * 0.35, r * 0.75, r * 0.5, 'rgba(255,255,255,.35)');      // belly patch
-    ellipse(-r * 0.4, -r * 0.45, r * 0.25, r * 0.13, 'rgba(255,255,255,.55)', -0.5); // highlight
+    ellipse(0, r * 0.35, r * 0.75, r * 0.5, 'rgba(255,255,255,.35)');
+    ellipse(-r * 0.4, -r * 0.45, r * 0.25, r * 0.13, 'rgba(255,255,255,.55)', -0.5);
     ctx.lineWidth = 2; ctx.strokeStyle = p.c[1]; ctx.beginPath(); ctx.ellipse(0, 0, r + 2, r - 1, 0, 0, Math.PI * 2); ctx.stroke();
-    // face
     ctx.fillStyle = '#3a2a35';
     if (p.face === 2) { ctx.lineWidth = 2.2; ctx.strokeStyle = '#3a2a35'; for (const s of [-1, 1]) { ctx.beginPath(); ctx.arc(s * 9, -3, 3.5, Math.PI * 1.1, Math.PI * 1.9); ctx.stroke(); } }
     else { ellipse(-9, -3, 2.8, 3.4, '#3a2a35'); ellipse(9, -3, 2.8, 3.4, '#3a2a35'); ellipse(-8, -4.3, 1, 1, '#fff'); ellipse(10, -4.3, 1, 1, '#fff'); }
@@ -428,45 +678,59 @@
     }
   }
 
+  // dog treat: a little bone with a soft glow
+  function drawTreats() {
+    for (const tr of treats) {
+      const y = tr.y + Math.sin(t * 4 + tr.ph) * 4;
+      ctx.save(); ctx.translate(tr.x, y); ctx.rotate(-0.35 + Math.sin(t * 3 + tr.ph) * 0.15);
+      ellipse(0, 0, 22, 14, 'rgba(255,240,170,.35)');
+      ctx.fillStyle = '#fff4e0'; ctx.strokeStyle = '#b98b52'; ctx.lineWidth = 2;
+      const bone = () => {
+        ctx.beginPath(); ctx.roundRect ? ctx.roundRect(-10, -3.5, 20, 7, 3) : ctx.rect(-10, -3.5, 20, 7);
+        for (const [cx, cy] of [[-11, -4], [-11, 4], [11, -4], [11, 4]]) { ctx.moveTo(cx + 5, cy); ctx.arc(cx, cy, 5, 0, Math.PI * 2); }
+      };
+      bone(); ctx.stroke(); bone(); ctx.fill();
+      ctx.restore();
+    }
+  }
+
+  function drawBow() {
+    const b = BOWS.find(x => x.id === bowId && x.need <= best) || BOWS[0];
+    let fill = b.c;
+    if (b.c === 'rainbow') { const g = ctx.createLinearGradient(-11, 0, 11, 0); ['#ff5d8f', '#ffd23f', '#2ec4b6', '#5ec8ff', '#b38bff'].forEach((c, i) => g.addColorStop(i / 4, c)); fill = g; }
+    ctx.save(); ctx.translate(-1, -13); ctx.rotate(-0.25);
+    ctx.fillStyle = fill;
+    ctx.beginPath(); ctx.moveTo(0, 0); ctx.lineTo(-11, -7); ctx.lineTo(-11, 7); ctx.closePath(); ctx.fill();
+    ctx.beginPath(); ctx.moveTo(0, 0); ctx.lineTo(11, -7); ctx.lineTo(11, 7); ctx.closePath(); ctx.fill();
+    ctx.fillStyle = b.d;
+    ctx.beginPath(); ctx.moveTo(-1, 1); ctx.lineTo(-5, 9); ctx.lineTo(-1.5, 8); ctx.closePath(); ctx.fill();
+    ctx.beginPath(); ctx.moveTo(1, 1); ctx.lineTo(5, 9); ctx.lineTo(1.5, 8); ctx.closePath(); ctx.fill();
+    ellipse(0, 0, 3.6, 3.6, b.d);
+    ellipse(-7, -2, 2, 1.2, 'rgba(255,255,255,.5)');
+    ctx.restore();
+  }
+
   // Cocker spaniel: golden coat, long wavy droopy ears, domed head, feathered legs
   function drawDog(x, y, rot) {
     const coat = '#d99a4e', dark = '#b8742f', light = '#f2c98b';
     ctx.save(); ctx.translate(x, y); ctx.rotate(rot);
     const legSwing = state === 'over' ? 0 : Math.sin(dog.legs) * 0.5;
-    // tail (stubby, wagging)
     ctx.save(); ctx.translate(-26, -8); ctx.rotate(-0.6 + Math.sin(t * 18) * 0.35); ellipse(-6, 0, 9, 4.5, dark); ctx.restore();
-    // back legs
     for (const [lx, a] of [[-16, legSwing], [-8, -legSwing]]) { ctx.save(); ctx.translate(lx, 10); ctx.rotate(a); ellipse(0, 9, 5.5, 10, lx === -16 ? dark : coat); ellipse(1, 18, 6, 4, light); ctx.restore(); }
-    // body
     ellipse(-4, 0, 26, 16, coat);
-    ellipse(-6, 8, 18, 7, light);                // feathered belly
-    // front legs
+    ellipse(-6, 8, 18, 7, light);
     for (const [lx, a] of [[10, -legSwing], [16, legSwing]]) { ctx.save(); ctx.translate(lx, 10); ctx.rotate(a); ellipse(0, 9, 5.5, 10, lx === 10 ? dark : coat); ellipse(1, 18, 6, 4, light); ctx.restore(); }
-    // head
     ctx.save(); ctx.translate(24, -14);
-    // far ear
     ctx.save(); ctx.translate(-4, -2); ctx.rotate(0.25 + dog.ear * 0.5); ellipse(-2, 14, 8, 17, dark); ctx.restore();
-    ellipse(0, 0, 15, 14, coat);                 // domed skull
-    ellipse(13, 5, 11, 8, light);                // muzzle
-    ellipse(23, 2, 4, 3.4, '#2d1b14');           // nose
+    ellipse(0, 0, 15, 14, coat);
+    ellipse(13, 5, 11, 8, light);
+    ellipse(23, 2, 4, 3.4, '#2d1b14');
     ellipse(22, 1, 1.2, 0.9, 'rgba(255,255,255,.6)');
     ctx.strokeStyle = '#6b3d1d'; ctx.lineWidth = 1.5; ctx.beginPath(); ctx.arc(16, 9, 4, 0.1, Math.PI * 0.8); ctx.stroke();
     if (state === 'over') { ctx.strokeStyle = '#2d1b14'; ctx.lineWidth = 2; ctx.beginPath(); ctx.moveTo(4, -6); ctx.lineTo(10, -1); ctx.moveTo(10, -6); ctx.lineTo(4, -1); ctx.stroke(); }
     else { ellipse(7, -3, 3.4, 4, '#2d1b14'); ellipse(8, -4.4, 1.2, 1.2, '#fff'); }
-    // pink hair bow (lazo) on top of her head
-    ctx.save(); ctx.translate(-1, -13); ctx.rotate(-0.25);
-    ctx.fillStyle = '#ff5d8f';
-    ctx.beginPath(); ctx.moveTo(0, 0); ctx.lineTo(-11, -7); ctx.lineTo(-11, 7); ctx.closePath(); ctx.fill();
-    ctx.beginPath(); ctx.moveTo(0, 0); ctx.lineTo(11, -7); ctx.lineTo(11, 7); ctx.closePath(); ctx.fill();
-    ctx.fillStyle = '#e0457a';
-    ctx.beginPath(); ctx.moveTo(-1, 1); ctx.lineTo(-5, 9); ctx.lineTo(-1.5, 8); ctx.closePath(); ctx.fill();
-    ctx.beginPath(); ctx.moveTo(1, 1); ctx.lineTo(5, 9); ctx.lineTo(1.5, 8); ctx.closePath(); ctx.fill();
-    ellipse(0, 0, 3.6, 3.6, '#e0457a');
-    ellipse(-7, -2, 2, 1.2, 'rgba(255,255,255,.5)');
-    ctx.restore();
-    // tongue when hopping
+    drawBow();
     if (state === 'play' && dog.vy < 0) ellipse(17, 13, 3, 5, '#ff7b8f');
-    // near ear: long, wavy, swinging
     ctx.save(); ctx.translate(-6, -2); ctx.rotate(0.15 + dog.ear * 0.6);
     ellipse(0, 15, 9, 19, dark);
     ctx.strokeStyle = '#9c5f22'; ctx.lineWidth = 1.5;
@@ -474,14 +738,18 @@
     ctx.restore();
     ctx.restore();
     // collar + tag
-    ctx.fillStyle = '#e63946'; ctx.save(); ctx.translate(16, -6); ctx.rotate(0.9); ctx.fillRect(-3, -9, 6, 18); ctx.restore();
+    const col = COLLARS.find(c => c.id === collarId && c.need <= best) || COLLARS[0];
+    ctx.save(); ctx.translate(16, -6); ctx.rotate(0.9);
+    ctx.fillStyle = col.c; ctx.fillRect(-3, -9, 6, 18);
+    if (col.id === 'pearl') { for (let i = -7; i <= 7; i += 4.5) ellipse(0, i, 3, 3, '#fffdf7'); ctx.strokeStyle = '#cfc6b4'; ctx.lineWidth = 0.8; for (let i = -7; i <= 7; i += 4.5) { ctx.beginPath(); ctx.arc(0, i, 3, 0, Math.PI * 2); ctx.stroke(); } }
+    if (col.id === 'navy') { ctx.fillStyle = '#fff'; for (let i = -6; i <= 6; i += 6) ellipse(0, i, 1.2, 1.2, '#fff'); }
+    ctx.restore();
     ellipse(20, 2, 3.5, 3.5, '#ffd23f');
     ctx.restore();
   }
 
   // Girl following Milky along the ground
   function drawGirl() {
-    // young woman (about 20): adult proportions, honey-blonde ponytail, yellow dress, natural face
     const skin = '#f6d2b4', skinD = '#e9bf9f', hair = '#e0a33f', hairD = '#b97f24', hairL = '#f3c46d';
     const dress = '#f7cf3d', dressD = '#d9a91c', shoe = '#fbfbf7', sole = '#c9c2b8';
     const moving = state !== 'over' || girl.x < 70;
@@ -498,30 +766,26 @@
       else ellipse(0, len, 2.6, 2.8, col);
       ctx.restore();
     };
-    // long ponytail behind, swinging with the stride
     ctx.save(); ctx.translate(-8, -97); ctx.rotate(0.55 + Math.sin(ph * 2) * 0.22 + (moving ? 0.2 : 0));
     ellipse(0, 16, 5.5, 17, hairD); ellipse(1, 14, 3.6, 13, hair); ctx.restore();
-    limb(-2, -38, -sw, 35, 5, skinD, 'shoe');                               // back leg
-    limb(-1, -76, worried ? 0.15 : sw * 0.8, 27, 4, skinD);                  // back arm
-    // A-line dress to just above the knee
+    limb(-2, -38, -sw, 35, 5, skinD, 'shoe');
+    limb(-1, -76, worried ? 0.15 : sw * 0.8, 27, 4, skinD);
     ctx.fillStyle = dress; ctx.beginPath();
     ctx.moveTo(-6.5, -78); ctx.lineTo(6.5, -78); ctx.lineTo(5, -62); ctx.lineTo(14, -32); ctx.lineTo(-14, -32); ctx.lineTo(-5, -62); ctx.closePath(); ctx.fill();
-    ctx.fillStyle = dressD; ctx.fillRect(-5.5, -64, 11, 2.5);               // waist tie
+    ctx.fillStyle = dressD; ctx.fillRect(-5.5, -64, 11, 2.5);
     ctx.beginPath(); ctx.moveTo(-14, -32); ctx.lineTo(14, -32); ctx.lineTo(13, -34.5); ctx.lineTo(-13, -34.5); ctx.fill();
-    limb(2, -38, sw, 35, 5, skin, 'shoe');                                  // front leg
-    // front arm reaches toward Milky while running; hand to mouth when Milky crashes
+    limb(2, -38, sw, 35, 5, skin, 'shoe');
     limb(2, -76, worried ? -2.6 : -1.15 - sw * 0.45, worried ? 17 : 27, 4, skin);
-    ellipse(1, -76, 4.5, 3.2, dress);                                       // sleeve cap
-    ctx.fillStyle = skin; ctx.fillRect(-2, -86, 5, 9);                      // neck
-    // head
-    ellipse(-2.5, -94, 10, 10.5, hair);                                     // back of hair
-    ellipse(2.5, -92, 7.5, 8.8, skin);                                      // face
-    ellipse(-0.5, -100.5, 9, 4.2, hair, -0.12);                             // hairline
-    ellipse(-4, -102, 4, 1.6, hairL, -0.3);                                 // shine
-    ellipse(-6.5, -87, 3.6, 8, hair);                                       // hair behind ear
-    ellipse(-7.5, -97, 2.2, 2.2, hairD);                                    // hair tie
-    ctx.strokeStyle = '#8a5a2b'; ctx.lineWidth = 1; ctx.beginPath(); ctx.moveTo(4, -96.5); ctx.lineTo(8, -97); ctx.stroke();  // eyebrow
-    ellipse(6, -93, 1.2, 1.6, '#3a2a35');                                   // eye
+    ellipse(1, -76, 4.5, 3.2, dress);
+    ctx.fillStyle = skin; ctx.fillRect(-2, -86, 5, 9);
+    ellipse(-2.5, -94, 10, 10.5, hair);
+    ellipse(2.5, -92, 7.5, 8.8, skin);
+    ellipse(-0.5, -100.5, 9, 4.2, hair, -0.12);
+    ellipse(-4, -102, 4, 1.6, hairL, -0.3);
+    ellipse(-6.5, -87, 3.6, 8, hair);
+    ellipse(-7.5, -97, 2.2, 2.2, hairD);
+    ctx.strokeStyle = '#8a5a2b'; ctx.lineWidth = 1; ctx.beginPath(); ctx.moveTo(4, -96.5); ctx.lineTo(8, -97); ctx.stroke();
+    ellipse(6, -93, 1.2, 1.6, '#3a2a35');
     ctx.strokeStyle = '#a0705a'; ctx.lineWidth = 1.2; ctx.beginPath();
     if (worried) ctx.arc(7, -86.5, 1.4, 0, Math.PI * 2); else ctx.arc(6.5, -88, 1.8, 0.3, Math.PI - 0.7);
     ctx.stroke();
@@ -530,6 +794,7 @@
 
   function drawParticles() {
     for (const p of particles) {
+      if (p.kind === 'label') { ctx.globalAlpha = Math.max(0, Math.min(1, p.life / 0.5)); text(p.text, p.x, p.y, 16, '#ffd23f'); continue; }
       ctx.globalAlpha = Math.max(0, p.life / (p.kind === 'star' ? 0.8 : 0.4));
       if (p.kind === 'puff') ellipse(p.x, p.y, 6, 6, '#fff');
       else { ctx.fillStyle = '#ffd23f'; ctx.font = '16px sans-serif'; ctx.textAlign = 'center'; ctx.fillText('★', p.x, p.y); }
@@ -543,10 +808,22 @@
     ctx.lineJoin = 'round'; ctx.lineWidth = Math.max(4, size / 6); ctx.strokeStyle = stroke; ctx.strokeText(str, x, y);
     ctx.fillStyle = fill; ctx.fillText(str, x, y);
   }
+  function plain(str, x, y, size, fill, align = 'center') {
+    ctx.font = `bold ${size}px "Trebuchet MS", system-ui, sans-serif`; ctx.textAlign = align; ctx.textBaseline = 'middle'; ctx.fillStyle = fill; ctx.fillText(str, x, y);
+  }
+  function rrect(x, y, w, h, r) { ctx.beginPath(); ctx.roundRect ? ctx.roundRect(x, y, w, h, r) : ctx.rect(x, y, w, h); }
 
   function panel(x, y, w, h) {
     ctx.fillStyle = '#fffaf0'; ctx.strokeStyle = '#3a2a35'; ctx.lineWidth = 4;
-    ctx.beginPath(); ctx.roundRect ? ctx.roundRect(x, y, w, h, 20) : ctx.rect(x, y, w, h); ctx.fill(); ctx.stroke();
+    rrect(x, y, w, h, 20); ctx.fill(); ctx.stroke();
+  }
+
+  function drawMedal(m, x, y, r) {
+    const M = MEDALS[m];
+    ctx.fillStyle = '#e0457a'; ctx.beginPath(); ctx.moveTo(x - r * 0.7, y - r * 2); ctx.lineTo(x - r * 0.1, y - r * 0.6); ctx.lineTo(x - r * 0.9, y - r * 0.6); ctx.closePath(); ctx.fill();
+    ctx.fillStyle = '#5ec8ff'; ctx.beginPath(); ctx.moveTo(x + r * 0.7, y - r * 2); ctx.lineTo(x + r * 0.1, y - r * 0.6); ctx.lineTo(x + r * 0.9, y - r * 0.6); ctx.closePath(); ctx.fill();
+    ellipse(x, y, r, r, M.d); ellipse(x, y, r * 0.8, r * 0.8, M.c);
+    ctx.fillStyle = M.d; ctx.font = `bold ${Math.round(r)}px sans-serif`; ctx.textAlign = 'center'; ctx.textBaseline = 'middle'; ctx.fillText('★', x, y + 1);
   }
 
   function drawMute() {
@@ -555,56 +832,80 @@
     ctx.fillText(muted ? '🔇' : '🔊', W - 30, 31);
   }
 
+  function drawBoard() {
+    const s = L();
+    // tabs: this week | all time
+    [['week', s.week, W / 2 - 132], ['all', s.all, W / 2 + 2]].forEach(([id, label, x]) => {
+      const on = lbTab === id;
+      ctx.fillStyle = on ? '#ffd23f' : '#efe6da'; rrect(x, TAB_Y, 130, TAB_H, 10); ctx.fill();
+      ctx.strokeStyle = '#3a2a35'; ctx.lineWidth = on ? 2.5 : 1.5; ctx.stroke();
+      plain(label, x + 65, TAB_Y + TAB_H / 2 + 1, 14, on ? '#3a2a35' : '#7a6670');
+    });
+    let y0 = 300;
+    if (lbMode === 'local') { plain(s.onPhone, W / 2, 292, 11, '#7a6670'); y0 = 308; }
+    const list = lbTab === 'week' ? boardWeek : boardAll;
+    if (boardStatus === 'loading') return plain(s.loading, W / 2, 340, 16, '#7a6670');
+    if (boardStatus === 'error') return plain(s.loadErr, W / 2, 340, 16, '#7a6670');
+    if (!list.length) return plain(s.empty, W / 2, 340, 16, '#7a6670');
+    list.forEach((row, k) => {
+      const y = y0 + k * 24, mine = myEntryId != null && row.id === myEntryId;
+      if (mine) { ctx.fillStyle = '#ffe9a8'; rrect(W / 2 - 136, y - 11, 272, 22, 7); ctx.fill(); }
+      const c = k === 0 ? '#e0457a' : '#3a2a35';
+      plain((k + 1) + '.', W / 2 - 96, y, 16, c, 'right');
+      plain(String(row.name).slice(0, 10), W / 2 - 86, y, 16, c, 'left');
+      plain(String(row.score), W / 2 + 126, y, 16, c, 'right');
+    });
+  }
+
   function drawUI() {
-    if (state === 'play') text(String(score), W / 2, 70, 56);
+    const s = L();
+    if (state === 'play') {
+      text(String(score), W / 2, 70, 56);
+      if (toast) {
+        const k = Math.min(1, toast.t * 4), fade = toast.t > 1.4 ? Math.max(0, 1 - (toast.t - 1.4) / 0.4) : 1;
+        ctx.globalAlpha = fade; ctx.save(); ctx.translate(W / 2, 150); ctx.scale(0.6 + 0.4 * k, 0.6 + 0.4 * k);
+        drawMedal(toast.medal, 0, -6, 22); text(toast.text, 0, 38, 24, '#ffd23f'); ctx.restore(); ctx.globalAlpha = 1;
+      }
+    }
     if (state === 'start') {
       text('Milky', W / 2, 120, 62, '#ffd23f');
       text('Hop!', W / 2, 178, 58, '#ff8fab');
       const pulse = 1 + Math.sin(t * 5) * 0.05;
       ctx.save(); ctx.translate(W / 2, H * 0.62); ctx.scale(pulse, pulse);
-      text(('ontouchstart' in window) ? 'Tap to hop' : 'Tap or press Space', 0, 0, 26); ctx.restore();
-      text('Help Milky the cocker spaniel', W / 2, H * 0.69, 17, '#fff');
-      text('bounce past the plushie towers!', W / 2, H * 0.69 + 24, 17, '#fff');
-      if (best > 0) text('Your best: ' + best, W / 2, H * 0.78, 24, '#ffd23f');
-      if (board.length) text('Top dog: ' + board[0].name + '  ' + board[0].score, W / 2, H * 0.78 + 34, 20, '#fff');
+      text(('ontouchstart' in window) ? s.tapHop : s.tapSpace, 0, 0, 26); ctx.restore();
+      text(s.help1, W / 2, H * 0.68, 17, '#fff');
+      text(s.help2, W / 2, H * 0.68 + 23, 17, '#fff');
+      text(s.help3, W / 2, H * 0.68 + 46, 15, '#ffd23f');
+      if (best > 0) text(s.yourBest + best, W / 2, 572, 20, '#ffd23f');
+      if (boardAll.length) text(s.topDog + boardAll[0].name + '  ' + boardAll[0].score, W / 2, 600, 17, '#fff');
     }
     if (state === 'over') {
-      const a = Math.min(1, overT * 3);
-      ctx.globalAlpha = a;
+      ctx.globalAlpha = Math.min(1, overT * 3);
       panel(W / 2 - 160, 84, 320, 572);
-      text('Oof! Plush pile-up', W / 2, 120, 26, '#ff8fab');
-      text('Score', W / 2 - 75, 160, 18, '#3a2a35', '#fff');
-      text(String(score), W / 2 - 75, 196, 38, '#fff');
-      text('Best', W / 2 + 75, 160, 18, '#3a2a35', '#fff');
-      text(String(best), W / 2 + 75, 196, 38, '#ffd23f');
-      if (newBest) text('NEW BEST!', W / 2, 234, 18, '#e63946', '#fff');
-      ctx.fillStyle = '#3a2a35'; ctx.fillRect(W / 2 - 130, 250, 260, 2);
-      text(lbMode === 'local' ? 'TOP 10 ON THIS PHONE' : 'TOP 10', W / 2, 272, 18, '#ffd23f');
-      ctx.textBaseline = 'middle';
-      if (boardStatus === 'loading') { ctx.font = 'bold 16px "Trebuchet MS", system-ui, sans-serif'; ctx.textAlign = 'center'; ctx.fillStyle = '#7a6670'; ctx.fillText('Loading scores...', W / 2, 330); }
-      else if (boardStatus === 'error') { ctx.font = 'bold 16px "Trebuchet MS", system-ui, sans-serif'; ctx.textAlign = 'center'; ctx.fillStyle = '#7a6670'; ctx.fillText("Couldn't load the Top 10.", W / 2, 330); }
-      else if (!board.length) { ctx.font = 'bold 16px "Trebuchet MS", system-ui, sans-serif'; ctx.textAlign = 'center'; ctx.fillStyle = '#7a6670'; ctx.fillText('No scores yet. Be the first!', W / 2, 330); }
-      else board.forEach((row, k) => {
-        const y = 304 + k * 29, mine = myEntryId != null && row.id === myEntryId;
-        if (mine) { ctx.fillStyle = '#ffe9a8'; ctx.beginPath(); ctx.roundRect ? ctx.roundRect(W / 2 - 136, y - 13, 272, 26, 8) : ctx.rect(W / 2 - 136, y - 13, 272, 26); ctx.fill(); }
-        ctx.font = 'bold 18px "Trebuchet MS", system-ui, sans-serif';
-        ctx.fillStyle = k === 0 ? '#e0457a' : '#3a2a35';
-        ctx.textAlign = 'right'; ctx.fillText((k + 1) + '.', W / 2 - 96, y);
-        ctx.textAlign = 'left'; ctx.fillText(String(row.name).slice(0, 10), W / 2 - 86, y);
-        ctx.textAlign = 'right'; ctx.fillText(String(row.score), W / 2 + 126, y);
-      });
-      if (overT > 0.6 && !formOpen) text('Tap to try again', W / 2, 628, 20, '#fff');
+      text(s.oof, W / 2, 118, 25, '#ff8fab');
+      text(s.score, W / 2 - 85, 156, 17, '#3a2a35', '#fff');
+      text(String(lastScore), W / 2 - 85, 190, 36, '#fff');
+      text(s.best, W / 2 + 85, 156, 17, '#3a2a35', '#fff');
+      text(String(best), W / 2 + 85, 190, 36, '#ffd23f');
+      const m = medalFor(lastScore);
+      if (m >= 0) drawMedal(m, W / 2, 190, 17);
+      const flags = [newBest ? s.newBest : '', unlockedNew ? s.newOutfit : ''].filter(Boolean).join('  ');
+      if (flags) plain(flags, W / 2, 228, 15, '#e63946');
+      ctx.fillStyle = '#3a2a35'; ctx.fillRect(W / 2 - 130, 241, 260, 2);
+      drawBoard();
+      if (overT > 0.6 && !formOpen) text(s.tryAgain, W / 2, 626, 20, '#fff');
       ctx.globalAlpha = 1;
     }
     drawMute();
   }
 
   // ---------- loop ----------
-  
   function frame(now) {
     const dt = Math.min(0.033, (now - last) / 1000); last = now;
     update(dt);
-    drawSky(); drawStacks(); drawGround(); drawGirl(); drawParticles(); drawDog(dog.x, dog.y, dog.rot); drawUI();
+    drawSky(); drawStacks(); drawTreats(); drawGround(); drawGirl(); drawParticles(); drawDog(dog.x, dog.y, dog.rot);
+    if (skyT > 1) { ctx.fillStyle = `rgba(20,20,60,${0.18 * (skyT - 1)})`; ctx.fillRect(0, 0, W, H); }
+    drawUI();
     requestAnimationFrame(frame);
   }
   requestAnimationFrame(frame);
