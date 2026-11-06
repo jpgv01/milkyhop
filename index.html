@@ -47,13 +47,13 @@
   #lbSkip { background: #fff; }
   .lb-row button:disabled { opacity: .6; }
 
-  #closet { position: fixed; left: 50%; top: 50%; transform: translate(-50%, -50%); width: min(340px, calc(100vw - 32px)); z-index: 6; }
+  #closet { position: fixed; left: 50%; top: 50%; transform: translate(-50%, -50%); width: min(340px, calc(100vw - 32px)); z-index: 6; max-height: calc(100vh - 24px); overflow-y: auto; box-sizing: border-box; }
   #closet h2 { margin: 0; font-size: 22px; color: #e0457a; text-align: center; }
   #closet h3 { margin: 6px 0 0; font-size: 15px; }
   .swatches { display: flex; flex-wrap: wrap; gap: 8px; }
-  .sw { width: 56px; height: 64px; border: 3px solid #3a2a35; border-radius: 12px; background: #fff; display: flex; flex-direction: column;
+  .sw { width: 52px; height: 56px; border: 3px solid #3a2a35; border-radius: 12px; background: #fff; display: flex; flex-direction: column;
     align-items: center; justify-content: center; gap: 2px; font: bold 11px "Trebuchet MS", system-ui, sans-serif; color: #3a2a35; cursor: pointer; padding: 2px; }
-  .sw .dot { width: 26px; height: 26px; border-radius: 50%; border: 2px solid #3a2a35; }
+  .sw .dot { flex-shrink: 0; width: 26px; height: 26px; border-radius: 50%; border: 2px solid #3a2a35; }
   .sw[aria-pressed="true"] { background: #ffe9a8; outline: 3px solid #e0457a; outline-offset: 1px; }
   .sw:disabled { opacity: .55; cursor: default; }
 </style>
@@ -80,6 +80,10 @@
   <div class="swatches" id="bowSwatches"></div>
   <h3 id="collarsTitle"></h3>
   <div class="swatches" id="collarSwatches"></div>
+  <h3 id="dressTitle"></h3>
+  <div class="swatches" id="dressSwatches"></div>
+  <h3 id="hairTitle"></h3>
+  <div class="swatches" id="hairSwatches"></div>
   <button type="button" id="closetDone"></button>
 </div>
 <script>
@@ -132,7 +136,7 @@
       nameErr: 'Use 2 to 10 letters, no numbers or spaces.', nameBad: 'Please choose another name.',
       saveErr: "Couldn't save. Check your connection and try again.", full: 'The scoreboard is full right now.',
       share: 'Share my score', shareText: s => `I scored ${s} in Milky Hop! 🐶 Can you beat me?`,
-      outfits: 'Outfits', bows: 'Bows', collars: 'Collars', done: 'Done', need: n => `Score ${n}`,
+      outfits: 'Outfits', bows: "Milky's bows", collars: "Milky's collars", dresses: "Girl's dresses", hair: "Girl's hair", done: 'Done', need: n => `Score ${n}`,
       medal: ['BRONZE MEDAL!', 'SILVER MEDAL!', 'GOLD MEDAL!'], treat: '+1 treat', langBtn: 'ES'
     },
     es: {
@@ -147,7 +151,7 @@
       nameErr: 'Usa de 2 a 10 letras, sin números ni espacios.', nameBad: 'Elige otro nombre, por favor.',
       saveErr: 'No se pudo guardar. Revisa tu conexión e inténtalo otra vez.', full: 'El marcador está lleno por ahora.',
       share: 'Compartir puntaje', shareText: s => `¡Hice ${s} puntos en Milky Hop! 🐶 ¿Me ganas?`,
-      outfits: 'Accesorios', bows: 'Lazos', collars: 'Collares', done: 'Listo', need: n => `${n} puntos`,
+      outfits: 'Accesorios', bows: 'Lazos de Milky', collars: 'Collares de Milky', dresses: 'Vestidos de la chica', hair: 'Peinado de la chica', done: 'Listo', need: n => `${n} puntos`,
       medal: ['¡MEDALLA DE BRONCE!', '¡MEDALLA DE PLATA!', '¡MEDALLA DE ORO!'], treat: '+1 premio', langBtn: 'EN'
     }
   };
@@ -168,8 +172,21 @@
     { id: 'navy', c: '#3a4fa3', need: 20 },
     { id: 'pearl', c: '#f8f4ec', need: 40 }
   ];
+  const DRESSES = [
+    { id: 'yellow', c: '#f7cf3d', d: '#d9a91c', need: 0 },
+    { id: 'mint', c: '#7fdcc0', d: '#3fb394', need: 8 },
+    { id: 'coral', c: '#ff8a7a', d: '#e0604f', need: 18 },
+    { id: 'lavender', c: '#c3a6ff', d: '#9277d9', need: 35 }
+  ];
+  const HAIRS = [
+    { id: 'none', c: 'none', need: 0 },
+    { id: 'headband', c: '#ff5d8f', need: 12 },
+    { id: 'daisy', c: '#ffffff', need: 25 },
+    { id: 'sunhat', c: '#e8c37a', need: 45 }
+  ];
   let bowId = load('milkyHop.bow', 'pink'), collarId = load('milkyHop.collar', 'red');
-  const unlockedCount = b => BOWS.filter(x => x.need <= b).length + COLLARS.filter(x => x.need <= b).length;
+  let dressId = load('milkyHop.dress', 'yellow'), hairId = load('milkyHop.hair', 'none');
+  const unlockedCount = b => [BOWS, COLLARS, DRESSES, HAIRS].reduce((n, l) => n + l.filter(x => x.need <= b).length, 0);
 
   // ---------- medals ----------
   const MEDALS = [{ at: 10, c: '#cd7f32', d: '#9c5a1f' }, { at: 25, c: '#d9dde3', d: '#9aa1ab' }, { at: 50, c: '#ffd23f', d: '#d9a400' }];
@@ -292,6 +309,7 @@
     langBtn.textContent = s.langBtn; langBtn.setAttribute('aria-label', lang === 'en' ? 'Cambiar a español' : 'Switch to English');
     closetBtn.textContent = '🎀 ' + s.outfits; shareBtn.textContent = '💬 ' + s.share;
     $('closetTitle').textContent = s.outfits; $('bowsTitle').textContent = s.bows; $('collarsTitle').textContent = s.collars;
+    $('dressTitle').textContent = s.dresses; $('hairTitle').textContent = s.hair;
     $('closetDone').textContent = s.done;
     if (closetOpen) buildCloset();
   }
@@ -307,9 +325,11 @@
         b.disabled = locked;
         b.setAttribute('aria-pressed', String(item.id === cur));
         const dot = document.createElement('span'); dot.className = 'dot';
-        dot.style.background = item.c === 'rainbow' ? 'conic-gradient(#ff5d8f, #ffd23f, #2ec4b6, #5ec8ff, #b38bff, #ff5d8f)' : (locked ? '#ddd' : item.c);
+        dot.style.background = locked ? '#ddd' : item.c === 'rainbow' ? 'conic-gradient(#ff5d8f, #ffd23f, #2ec4b6, #5ec8ff, #b38bff, #ff5d8f)'
+          : item.c === 'none' ? 'linear-gradient(135deg, #fff 44%, #3a2a35 44%, #3a2a35 56%, #fff 56%)'
+          : item.id === 'daisy' ? 'radial-gradient(circle, #ffd23f 30%, #fff 32%)' : item.c;
         const lab = document.createElement('span');
-        lab.textContent = locked ? '🔒 ' + item.need : (item.need ? L().need(item.need) : '★');
+        lab.textContent = locked ? '🔒 ' + item.need : (item.need ? String(item.need) : '★');
         b.append(dot, lab);
         b.setAttribute('aria-label', item.id + (locked ? ' — ' + L().need(item.need) : ''));
         b.addEventListener('click', () => { pick(item.id); buildCloset(); });
@@ -318,6 +338,8 @@
     };
     mk(BOWS, bowId, $('bowSwatches'), id => { bowId = id; store('milkyHop.bow', id); });
     mk(COLLARS, collarId, $('collarSwatches'), id => { collarId = id; store('milkyHop.collar', id); });
+    mk(DRESSES, dressId, $('dressSwatches'), id => { dressId = id; store('milkyHop.dress', id); });
+    mk(HAIRS, hairId, $('hairSwatches'), id => { hairId = id; store('milkyHop.hair', id); });
   }
   closetBtn.addEventListener('click', () => { closetOpen = true; buildCloset(); closet.hidden = false; });
   $('closetDone').addEventListener('click', () => { closetOpen = false; closet.hidden = true; });
@@ -751,7 +773,9 @@
   // Girl following Milky along the ground
   function drawGirl() {
     const skin = '#f6d2b4', skinD = '#e9bf9f', hair = '#e0a33f', hairD = '#b97f24', hairL = '#f3c46d';
-    const dress = '#f7cf3d', dressD = '#d9a91c', shoe = '#fbfbf7', sole = '#c9c2b8';
+    const dr = DRESSES.find(x => x.id === dressId && x.need <= best) || DRESSES[0];
+    const hairAcc = (HAIRS.find(x => x.id === hairId && x.need <= best) || HAIRS[0]).id;
+    const dress = dr.c, dressD = dr.d, shoe = '#fbfbf7', sole = '#c9c2b8';
     const moving = state !== 'over' || girl.x < 70;
     const ph = girl.run, sw = moving ? Math.sin(ph) * 0.6 : 0;
     const bob = moving ? -Math.abs(Math.sin(ph)) * 4 : 0;
@@ -784,6 +808,17 @@
     ellipse(-4, -102, 4, 1.6, hairL, -0.3);
     ellipse(-6.5, -87, 3.6, 8, hair);
     ellipse(-7.5, -97, 2.2, 2.2, hairD);
+    if (hairAcc === 'headband') {
+      ctx.strokeStyle = '#ff5d8f'; ctx.lineWidth = 2.6; ctx.lineCap = 'round';
+      ctx.beginPath(); ctx.ellipse(-0.5, -96, 9.6, 8.6, -0.12, Math.PI * 1.05, Math.PI * 1.9); ctx.stroke(); ctx.lineCap = 'butt';
+    } else if (hairAcc === 'daisy') {
+      for (let i = 0; i < 6; i++) { const a = i * Math.PI / 3; ellipse(-7.5 + Math.cos(a) * 3, -101 + Math.sin(a) * 3, 2.2, 2.2, '#ffffff'); }
+      ellipse(-7.5, -101, 1.8, 1.8, '#ffd23f');
+    } else if (hairAcc === 'sunhat') {
+      ellipse(-0.5, -101, 16, 3.6, '#d9ae5c', -0.08);
+      ellipse(-1, -104.5, 8.5, 6.5, '#e8c37a', -0.08);
+      ctx.fillStyle = '#ff5d8f'; ctx.save(); ctx.translate(-1, -101.8); ctx.rotate(-0.08); ctx.fillRect(-8.4, -2.4, 16.8, 2.6); ctx.restore();
+    }
     ctx.strokeStyle = '#8a5a2b'; ctx.lineWidth = 1; ctx.beginPath(); ctx.moveTo(4, -96.5); ctx.lineTo(8, -97); ctx.stroke();
     ellipse(6, -93, 1.2, 1.6, '#3a2a35');
     ctx.strokeStyle = '#a0705a'; ctx.lineWidth = 1.2; ctx.beginPath();
